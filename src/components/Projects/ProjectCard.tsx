@@ -20,7 +20,7 @@ interface ProjectCardProps {
   spaceId: string;
 }
 
-const ProjectCard = ({ project, onClick, onDelete, spaceId }: ProjectCardProps) => {
+const ProjectCard = ({ project, onClick, onDelete }: ProjectCardProps) => {
   const isValidated = project.status === 'validated';
   const preview = project.script.trim().slice(0, 80) || 'Script vide…';
 

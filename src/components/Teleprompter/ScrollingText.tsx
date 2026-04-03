@@ -80,7 +80,7 @@ const ScrollingText = forwardRef<ScrollingTextHandle, ScrollingTextProps>(
       lastTimeRef.current = undefined;
     }, [text]);
 
-    const paragraphs = text.split('\n').filter((_, i, arr) => {
+    const paragraphs = text.split('\n').filter(() => {
       // Garder les lignes vides sauf les doublons consécutifs
       return true;
     });

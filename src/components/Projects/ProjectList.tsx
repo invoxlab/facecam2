@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Plus, Video, Link, CheckCircle } from 'lucide-react';
 import ProjectCard from './ProjectCard';
-import ProjectForm from './ProjectForm';
 import { useProjects } from '../../hooks/useProjects';
 
 type Tab = 'to-record' | 'validated';

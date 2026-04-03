@@ -55,7 +55,7 @@ const TeleprompterView = () => {
   const navigate = useNavigate();
   const mode = (searchParams.get('mode') || 'rehearse') as TeleMode;
 
-  const { project, updateSettings } = useProject(id);
+  const { project } = useProject(id);
   const videoFormat = project?.settings.videoFormat ?? 'landscape';
   const { stream, error: cameraError, isLoading: cameraLoading, retry } = useCamera(videoFormat);
   const recorder = useMediaRecorder();
@@ -147,13 +147,6 @@ const TeleprompterView = () => {
     navigate(`/s/${spaceId}/project/${id}`);
   }, [id, spaceId, navigate]);
 
-  const handleSpeedChange = useCallback((delta: number) => {
-    setLocalSpeed(prev => {
-      const next = Math.min(10, Math.max(1, prev + delta));
-      if (id) updateSettings(id, { scrollSpeed: next });
-      return next;
-    });
-  }, [id, updateSettings]);
 
   // Vibration au démarrage/arrêt
   useEffect(() => {
@@ -250,12 +243,10 @@ const TeleprompterView = () => {
           mode={mode}
           isPlaying={isPlaying}
           recorderState={recorder.state}
-          speed={localSpeed}
           onPlayPause={handlePlayPause}
           onStop={handleStop}
           onReset={handleReset}
           onQuit={handleQuit}
-          onSpeedChange={handleSpeedChange}
         />
       )}
     </div>

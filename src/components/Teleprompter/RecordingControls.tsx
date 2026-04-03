@@ -4,26 +4,21 @@ interface RecordingControlsProps {
   mode: 'rehearse' | 'record';
   isPlaying: boolean;
   recorderState: 'idle' | 'recording' | 'paused' | 'stopped';
-  speed: number;
   onPlayPause: () => void;
   onStop: () => void;
   onReset: () => void;
   onQuit: () => void;
-  onSpeedChange: (delta: number) => void;
 }
 
 const RecordingControls = ({
   mode,
   isPlaying,
   recorderState,
-  speed,
   onPlayPause,
   onStop,
   onReset,
   onQuit,
-  onSpeedChange,
 }: RecordingControlsProps) => {
-  const isPaused = recorderState === 'paused' || (!isPlaying && recorderState === 'idle');
 
   return (
     <div className="absolute bottom-0 left-0 right-0 z-20 pb-safe">

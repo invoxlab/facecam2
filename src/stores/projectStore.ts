@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { Project, ProjectSettings, ProjectStatus, DEFAULT_SETTINGS } from '../types';
+import { Project, ProjectSettings, DEFAULT_SETTINGS } from '../types';
 import { db } from '../lib/db';
 
 function generateId(): string {
