@@ -3,19 +3,20 @@ import { estimateReadingTime, countWords } from '../../lib/readingTime';
 
 interface ReadingTimeEstimateProps {
   script: string;
-  wordsPerMinute: number;
 }
 
-const ReadingTimeEstimate = ({ script, wordsPerMinute }: ReadingTimeEstimateProps) => {
+const AVERAGE_WPM = 150;
+
+const ReadingTimeEstimate = ({ script }: ReadingTimeEstimateProps) => {
   const words = countWords(script);
-  const time = estimateReadingTime(script, wordsPerMinute);
+  const time = estimateReadingTime(script, AVERAGE_WPM);
 
   if (words === 0) return null;
 
   return (
-    <div className="flex items-center gap-1.5 text-sm text-gray-500">
-      <Clock size={14} />
-      <span>{time} à {wordsPerMinute} mots/min</span>
+    <div className="flex items-center gap-1.5 text-xs text-gray-500">
+      <Clock size={12} />
+      <span>{time}</span>
       <span className="text-gray-300">·</span>
       <span>{words} mots</span>
     </div>

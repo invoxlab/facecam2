@@ -17,7 +17,6 @@ interface ProjectCardProps {
   project: Project;
   onClick: () => void;
   onDelete: () => void;
-  spaceId: string;
 }
 
 const ProjectCard = ({ project, onClick, onDelete }: ProjectCardProps) => {

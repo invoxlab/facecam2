@@ -1,5 +1,4 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import SpacePicker from './components/Landing/SpacePicker';
 import ProjectList from './components/Projects/ProjectList';
 import ScriptEditor from './components/Editor/ScriptEditor';
 import TeleprompterView from './components/Teleprompter/TeleprompterView';
@@ -9,14 +8,14 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Landing : saisie du nom d'espace */}
-        <Route path="/" element={<SpacePicker />} />
+        {/* Accueil direct sur la liste des projets */}
+        <Route path="/" element={<ProjectList />} />
+        <Route path="/project/:id" element={<ScriptEditor />} />
+        <Route path="/project/:id/teleprompter" element={<TeleprompterView />} />
+        <Route path="/project/:id/preview" element={<VideoPreview />} />
 
-        {/* Espace utilisateur */}
-        <Route path="/s/:spaceId" element={<ProjectList />} />
-        <Route path="/s/:spaceId/project/:id" element={<ScriptEditor />} />
-        <Route path="/s/:spaceId/project/:id/teleprompter" element={<TeleprompterView />} />
-        <Route path="/s/:spaceId/project/:id/preview" element={<VideoPreview />} />
+        {/* Ancien format /s/:spaceId redirige vers / */}
+        <Route path="/s/*" element={<Navigate to="/" replace />} />
 
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />

@@ -50,7 +50,7 @@ function CameraErrorScreen({ error, retry }: { error: CameraError; retry: () => 
 }
 
 const TeleprompterView = () => {
-  const { id, spaceId = 'default' } = useParams<{ id: string; spaceId: string }>();
+  const { id } = useParams<{ id: string }>();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const mode = (searchParams.get('mode') || 'rehearse') as TeleMode;
@@ -101,7 +101,7 @@ const TeleprompterView = () => {
   // videoStore contient déjà le blob URL, pas besoin de le passer via router state
   useEffect(() => {
     if (recorder.state === 'stopped') {
-      navigate(`/s/${spaceId}/project/${id}/preview`);
+      navigate(`/project/${id}/preview`);
     }
   }, [recorder.state]);
 
@@ -144,8 +144,8 @@ const TeleprompterView = () => {
   }, []);
 
   const handleQuit = useCallback(() => {
-    navigate(`/s/${spaceId}/project/${id}`);
-  }, [id, spaceId, navigate]);
+    navigate(`/project/${id}`);
+  }, [id, navigate]);
 
 
   // Vibration au démarrage/arrêt

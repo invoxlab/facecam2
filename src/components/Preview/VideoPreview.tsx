@@ -19,7 +19,7 @@ function formatDuration(seconds: number): string {
 }
 
 const VideoPreview = () => {
-  const { id, spaceId = 'default' } = useParams<{ id: string; spaceId: string }>();
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { currentProject, validateProject } = useProjectStore();
 
@@ -67,7 +67,6 @@ const VideoPreview = () => {
     setIsValidating(true);
 
     try {
-      // Sauvegarder la vidéo dans IndexedDB
       await db.saveVideo({
         projectId: id,
         blob: record.blob,
@@ -75,12 +74,11 @@ const VideoPreview = () => {
         recordedAt: Date.now(),
       });
 
-      // Marquer le projet comme validé
       await validateProject(id, { duration: videoDuration, size: fileSize });
 
-      // Déclencher le téléchargement
+      // Téléchargement
       const ext = mimeType.includes('mp4') ? 'mp4' : 'webm';
-      const projectName = currentProject?.name ?? 'teleprompt';
+      const projectName = currentProject?.name ?? 'facecam';
       const date = new Date().toISOString().slice(0, 16).replace('T', '-').replace(':', 'h');
       const filename = `${projectName.replace(/[^a-z0-9]/gi, '-').toLowerCase()}-${date}.${ext}`;
       const a = document.createElement('a');
@@ -91,8 +89,7 @@ const VideoPreview = () => {
       a.click();
       setTimeout(() => document.body.removeChild(a), 300);
 
-      // Retourner à l'accueil
-      navigate(`/s/${spaceId}`);
+      navigate('/');
     } catch (err) {
       console.error('Erreur validation:', err);
       setIsValidating(false);
@@ -100,12 +97,12 @@ const VideoPreview = () => {
   };
 
   const handleRetake = () => {
-    navigate(`/s/${spaceId}/project/${id}/teleprompter?mode=record`);
+    navigate(`/project/${id}/teleprompter?mode=record`);
   };
 
   const handleHome = () => {
     videoStore.clear();
-    navigate(`/s/${spaceId}`);
+    navigate('/');
   };
 
   const durationStr = formatDuration(videoDuration);
@@ -116,7 +113,7 @@ const VideoPreview = () => {
       <header className="bg-gray-900 border-b border-gray-800">
         <div className="max-w-lg mx-auto px-4 py-3 flex items-center gap-3">
           <button
-            onClick={() => navigate(`/s/${spaceId}/project/${id}`)}
+            onClick={() => navigate(`/project/${id}`)}
             className="p-2 -ml-2 text-gray-400 hover:text-white rounded-xl transition-colors"
             aria-label="Retour"
           >
@@ -145,9 +142,9 @@ const VideoPreview = () => {
           />
         ) : (
           <div className="flex flex-col items-center gap-3 text-gray-400 p-8 text-center">
-            <AlertCircle size={40} className="text-red-400" />
+            <AlertCircle size={40} className="text-invox-orange" />
             <p className="text-sm font-medium text-white">Enregistrement vide</p>
-            <button onClick={handleRetake} className="mt-2 text-blue-400 text-sm underline">
+            <button onClick={handleRetake} className="mt-2 text-invox-blue text-sm underline">
               Réessayer
             </button>
           </div>
@@ -156,7 +153,6 @@ const VideoPreview = () => {
 
       {/* Actions */}
       <div className="max-w-lg mx-auto w-full px-4 py-6 space-y-3">
-        {/* Valider */}
         <button
           onClick={handleValidate}
           disabled={!blobUrl || fileSize === 0 || isValidating}
@@ -167,7 +163,6 @@ const VideoPreview = () => {
         </button>
 
         <div className="flex gap-3">
-          {/* Recommencer */}
           <button
             onClick={handleRetake}
             className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-2xl border-2 border-gray-600 text-gray-300 font-medium text-sm active:scale-95 transition-transform"
@@ -175,8 +170,6 @@ const VideoPreview = () => {
             <RotateCcw size={18} />
             Recommencer
           </button>
-
-          {/* Retour accueil */}
           <button
             onClick={handleHome}
             className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-2xl border-2 border-gray-600 text-gray-300 font-medium text-sm active:scale-95 transition-transform"

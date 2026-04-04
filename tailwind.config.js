@@ -5,7 +5,16 @@ export default {
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
-    extend: {},
+    extend: {
+      colors: {
+        invox: {
+          blue: '#3E9FD9',
+          dark: '#004261',
+          yellow: '#FFDE00',
+          orange: '#F4704D',
+        },
+      },
+    },
   },
   plugins: [],
 }
