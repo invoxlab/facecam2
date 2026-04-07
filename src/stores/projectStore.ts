@@ -152,12 +152,15 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
       const now = Date.now();
 
       if (existing) {
+        // Mettre à jour seulement si pas encore validé localement
         if (existing.status !== 'validated') {
           const updatedProject: Project = {
             ...existing,
             name: s.titre,
             script: s.script,
             instructions: s.instructions,
+            // Si Airtable dit "Validé", on marque comme validé
+            ...(s.validated ? { status: 'validated' as const, validatedAt: existing.validatedAt ?? now } : {}),
             updatedAt: now,
           };
           await db.saveProject(updatedProject);
@@ -172,7 +175,8 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
           script: s.script,
           instructions: s.instructions,
           settings: { ...DEFAULT_SETTINGS },
-          status: 'to-record',
+          status: s.validated ? 'validated' : 'to-record',
+          ...(s.validated ? { validatedAt: now } : {}),
           createdAt: now,
           updatedAt: now,
         };

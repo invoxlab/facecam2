@@ -59,5 +59,7 @@ export interface AirtableLoadResponse {
     script: string;
     instructions: string;
     ordre: number;
+    validated?: boolean;
+    videoUrl?: string;
   }[];
 }

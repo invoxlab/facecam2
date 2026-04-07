@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, AlertCircle, CheckCircle, RotateCcw, Home } from 'lucide-react';
+import { ArrowLeft, AlertCircle, CheckCircle, RotateCcw, Home, Upload } from 'lucide-react';
 import { useProjectStore } from '../../stores/projectStore';
 import { videoStore } from '../../lib/videoStore';
 import { db } from '../../lib/db';
+import { uploadVideoToSupabase, notifyAirtableValidated } from '../../lib/uploadVideo';
 
 function formatFileSize(bytes: number): string {
   if (bytes === 0) return '0 Ko';
@@ -30,6 +31,7 @@ const VideoPreview = () => {
 
   const [videoDuration, setVideoDuration] = useState(0);
   const [isValidating, setIsValidating] = useState(false);
+  const [validatingStep, setValidatingStep] = useState('');
   const videoRef = useRef<HTMLVideoElement>(null);
 
   // Fix durée WebM
@@ -67,16 +69,27 @@ const VideoPreview = () => {
     setIsValidating(true);
 
     try {
-      await db.saveVideo({
-        projectId: id,
-        blob: record.blob,
-        mimeType,
-        recordedAt: Date.now(),
-      });
-
+      // 1. Sauvegarder localement
+      setValidatingStep('Sauvegarde locale…');
+      await db.saveVideo({ projectId: id, blob: record.blob, mimeType, recordedAt: Date.now() });
       await validateProject(id, { duration: videoDuration, size: fileSize });
 
-      // Téléchargement
+      // 2. Upload Supabase (si le projet vient d'Airtable)
+      const airtableId = currentProject?.airtableId;
+      if (airtableId) {
+        setValidatingStep('Envoi de la vidéo…');
+        try {
+          const { url } = await uploadVideoToSupabase(record.blob, airtableId, mimeType);
+          setValidatingStep('Mise à jour Airtable…');
+          await notifyAirtableValidated(airtableId, url, videoDuration, fileSize);
+        } catch (uploadErr) {
+          // L'upload cloud a échoué mais la validation locale est OK
+          console.warn('Upload cloud échoué (non bloquant):', uploadErr);
+        }
+      }
+
+      // 3. Téléchargement local
+      setValidatingStep('Téléchargement…');
       const ext = mimeType.includes('mp4') ? 'mp4' : 'webm';
       const projectName = currentProject?.name ?? 'facecam';
       const date = new Date().toISOString().slice(0, 16).replace('T', '-').replace(':', 'h');
@@ -93,6 +106,7 @@ const VideoPreview = () => {
     } catch (err) {
       console.error('Erreur validation:', err);
       setIsValidating(false);
+      setValidatingStep('');
     }
   };
 
@@ -158,8 +172,8 @@ const VideoPreview = () => {
           disabled={!blobUrl || fileSize === 0 || isValidating}
           className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl bg-green-600 text-white font-semibold text-base disabled:opacity-40 active:scale-95 transition-transform"
         >
-          <CheckCircle size={20} />
-          {isValidating ? 'Validation…' : 'Valider cette prise'}
+          {isValidating ? <Upload size={20} className="animate-bounce" /> : <CheckCircle size={20} />}
+          {isValidating ? (validatingStep || 'Validation…') : 'Valider cette prise'}
         </button>
 
         <div className="flex gap-3">

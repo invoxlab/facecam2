@@ -66,6 +66,8 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
         script: String(s.fields.Script ?? ''),
         instructions: String(s.fields.Instructions ?? ''),
         ordre: Number(s.fields.Ordre ?? 0),
+        validated: String(s.fields.Statut ?? '') === 'Validé',
+        videoUrl: String(s.fields['Vidéo'] ?? ''),
       });
     }
 
@@ -79,7 +81,11 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
         email: String(contact.fields.Email ?? ''),
         fonction: String(contact.fields.Fonction ?? ''),
       },
-      scripts,
+      scripts: scripts.map(s => ({
+        ...s,
+        validated: (s as AirtableScriptExt).validated,
+        videoUrl: (s as AirtableScriptExt).videoUrl,
+      })),
     }));
 
   } catch (err) {
@@ -100,4 +106,9 @@ interface AirtableScript {
   script: string;
   instructions: string;
   ordre: number;
+}
+
+interface AirtableScriptExt extends AirtableScript {
+  validated: boolean;
+  videoUrl: string;
 }
