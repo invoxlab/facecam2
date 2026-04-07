@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Plus, Video, CheckCircle } from 'lucide-react';
 import ProjectCard from './ProjectCard';
 import { useProjects } from '../../hooks/useProjects';
+import { loadPerson } from '../../lib/syncAirtable';
 
 type Tab = 'to-record' | 'validated';
 
@@ -13,6 +14,7 @@ const ProjectList = () => {
   const [tab, setTab] = useState<Tab>('to-record');
   const [showForm, setShowForm] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const person = loadPerson();
 
   const toRecord = projects.filter(p => p.status !== 'validated');
   const validated = projects.filter(p => p.status === 'validated');
@@ -39,7 +41,13 @@ const ProjectList = () => {
           <div className="flex items-center justify-between mb-1">
             <div className="flex items-center gap-3">
               <img src="/invox-logo.svg" alt="Invox" className="h-6" />
-              <span className="text-xs text-invox-blue font-medium bg-invox-blue/10 px-2 py-0.5 rounded-full">FaceCam</span>
+              {person?.prenom ? (
+                <span className="text-sm font-medium text-invox-dark">
+                  Bonjour {person.prenom} 👋
+                </span>
+              ) : (
+                <span className="text-xs text-invox-blue font-medium bg-invox-blue/10 px-2 py-0.5 rounded-full">FaceCam</span>
+              )}
             </div>
             <button
               onClick={() => setShowForm(true)}

@@ -23,14 +23,16 @@ export const DEFAULT_SETTINGS: ProjectSettings = {
 
 export interface Project {
   id: string;
-  spaceId: string;          // identifiant de l'espace utilisateur (slug dans l'URL)
+  spaceId: string;
   name: string;
   script: string;
+  instructions?: string;   // note admin (depuis Airtable)
+  airtableId?: string;     // ID du record Airtable (pour dédoublonnage)
   settings: ProjectSettings;
-  status: ProjectStatus;    // 'to-record' | 'validated'
-  validatedAt?: number;     // timestamp de validation
-  videoDuration?: number;   // durée en secondes (rempli à la validation)
-  videoSize?: number;       // taille en octets (rempli à la validation)
+  status: ProjectStatus;
+  validatedAt?: number;
+  videoDuration?: number;
+  videoSize?: number;
   createdAt: number;
   updatedAt: number;
 }
@@ -43,3 +45,20 @@ export interface StoredVideo {
 }
 
 export type RecordingMode = 'rehearse' | 'record';
+
+// Réponse de l'API /api/load
+export interface AirtableLoadResponse {
+  person: {
+    prenom: string;
+    nom: string;
+    email: string;
+    fonction: string;
+  };
+  scripts: {
+    airtableId: string;
+    titre: string;
+    script: string;
+    instructions: string;
+    ordre: number;
+  }[];
+}
