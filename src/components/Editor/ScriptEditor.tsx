@@ -217,16 +217,6 @@ const ScriptEditor = () => {
         </div>
       )}
 
-      {/* Note / instructions admin */}
-      {project.instructions && (
-        <div className="max-w-lg mx-auto w-full px-4 pb-2">
-          <div className="bg-invox-yellow/20 border border-invox-yellow rounded-xl px-4 py-3 flex gap-2">
-            <span className="text-base">📋</span>
-            <p className="text-sm text-invox-dark leading-relaxed">{project.instructions}</p>
-          </div>
-        </div>
-      )}
-
       {/* Zone de texte principale */}
       <div className="flex-1 max-w-lg mx-auto w-full px-4 pt-2 pb-4">
         <textarea

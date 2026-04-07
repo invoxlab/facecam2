@@ -1,7 +1,6 @@
 import { create } from 'zustand';
 import { Project, ProjectSettings, DEFAULT_SETTINGS } from '../types';
 import { db } from '../lib/db';
-import { SyncResult } from '../lib/syncAirtable';
 
 function generateId(): string {
   return crypto.randomUUID();
@@ -20,7 +19,6 @@ interface ProjectStore {
   validateProject: (id: string, meta: { duration: number; size: number }) => Promise<void>;
   deleteProject: (id: string) => Promise<void>;
   duplicateProject: (id: string) => Promise<Project>;
-  importFromAirtable: (data: SyncResult) => Promise<{ added: number; updated: number }>;
 }
 
 export const useProjectStore = create<ProjectStore>((set, get) => ({
@@ -120,53 +118,6 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
       projects: state.projects.filter(p => p.id !== id),
       currentProject: state.currentProject?.id === id ? null : state.currentProject,
     }));
-  },
-
-  importFromAirtable: async (data: SyncResult) => {
-    let added = 0;
-    let updated = 0;
-
-    for (const s of data.scripts) {
-      const existing = await db.getProjectByAirtableId(s.airtableId);
-      const now = Date.now();
-
-      if (existing) {
-        // Mettre à jour le script et les instructions seulement si pas encore validé
-        if (existing.status !== 'validated') {
-          const updatedProject: Project = {
-            ...existing,
-            name: s.titre,
-            script: s.script,
-            instructions: s.instructions,
-            updatedAt: now,
-          };
-          await db.saveProject(updatedProject);
-          updated++;
-        }
-      } else {
-        // Créer un nouveau projet
-        const newProject: Project = {
-          id: crypto.randomUUID(),
-          spaceId: 'local',
-          airtableId: s.airtableId,
-          name: s.titre,
-          script: s.script,
-          instructions: s.instructions,
-          settings: { ...DEFAULT_SETTINGS },
-          status: 'to-record',
-          createdAt: now,
-          updatedAt: now,
-        };
-        await db.saveProject(newProject);
-        added++;
-      }
-    }
-
-    // Recharger la liste
-    const projects = await db.getProjectsBySpace('local');
-    set({ projects });
-
-    return { added, updated };
   },
 
   duplicateProject: async (id: string) => {
