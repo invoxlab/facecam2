@@ -32,6 +32,7 @@ const VideoPreview = () => {
   const [videoDuration, setVideoDuration] = useState(0);
   const [isValidating, setIsValidating] = useState(false);
   const [validatingStep, setValidatingStep] = useState('');
+  const [cloudWarning, setCloudWarning] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   // Fix durée WebM
@@ -83,8 +84,9 @@ const VideoPreview = () => {
           setValidatingStep('Mise à jour Airtable…');
           await notifyAirtableValidated(airtableId, url, videoDuration, fileSize);
         } catch (uploadErr) {
-          // L'upload cloud a échoué mais la validation locale est OK
-          console.warn('Upload cloud échoué (non bloquant):', uploadErr);
+          const msg = uploadErr instanceof Error ? uploadErr.message : String(uploadErr);
+          console.warn('Upload cloud échoué:', msg);
+          setCloudWarning(`Vidéo sauvegardée localement mais non envoyée au cloud : ${msg}`);
         }
       }
 
@@ -164,6 +166,15 @@ const VideoPreview = () => {
           </div>
         )}
       </div>
+
+      {/* Avertissement cloud */}
+      {cloudWarning && (
+        <div className="max-w-lg mx-auto w-full px-4 pt-3">
+          <div className="bg-yellow-900/50 border border-yellow-600 rounded-xl px-4 py-3 text-yellow-200 text-xs">
+            ⚠️ {cloudWarning}
+          </div>
+        </div>
+      )}
 
       {/* Actions */}
       <div className="max-w-lg mx-auto w-full px-4 py-6 space-y-3">
