@@ -11,7 +11,7 @@ interface TelePromptDB extends DBSchema {
     };
   };
   videos: {
-    key: string; // projectId
+    key: string;
     value: StoredVideo;
   };
 }
@@ -30,12 +30,9 @@ function getDB() {
           store.createIndex('by-updatedAt', 'updatedAt');
         }
         if (oldVersion < 2) {
-          // Migration : ajouter index spaceId sur projects existants
           if (!database.objectStoreNames.contains('videos')) {
             database.createObjectStore('videos', { keyPath: 'projectId' });
           }
-          // Note : on ne peut pas ajouter un index à un store existant dans le même upgrade
-          // sans le recréer — on gère spaceId côté applicatif pour la v2
         }
       },
     });
@@ -53,9 +50,13 @@ export const db = {
   async getProjectsBySpace(spaceId: string): Promise<Project[]> {
     const database = await getDB();
     const all = await database.getAllFromIndex('projects', 'by-updatedAt');
-    return all
-      .filter(p => (p.spaceId ?? 'default') === spaceId)
-      .reverse();
+    return all.filter(p => (p.spaceId ?? 'local') === spaceId).reverse();
+  },
+
+  async getProjectByAirtableId(airtableId: string): Promise<Project | undefined> {
+    const database = await getDB();
+    const all = await database.getAll('projects');
+    return all.find(p => p.airtableId === airtableId);
   },
 
   async getProject(id: string): Promise<Project | undefined> {
@@ -71,11 +72,9 @@ export const db = {
   async deleteProject(id: string): Promise<void> {
     const database = await getDB();
     await database.delete('projects', id);
-    // Supprimer la vidéo associée si elle existe
     try { await database.delete('videos', id); } catch {}
   },
 
-  // Vidéos validées
   async saveVideo(video: StoredVideo): Promise<void> {
     const database = await getDB();
     await database.put('videos', video);
