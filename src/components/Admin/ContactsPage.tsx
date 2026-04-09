@@ -12,6 +12,7 @@ interface ContactSummary {
   email: string;
   fonction: string;
   token: string;
+  entreprise: string;
   scriptCount: number;
   validatedCount: number;
 }
@@ -88,9 +89,9 @@ export default function ContactsPage() {
                   <p className="font-semibold text-invox-dark">
                     {c.prenom} {c.nom}
                   </p>
-                  {c.fonction && (
-                    <p className="text-xs text-gray-500 mt-0.5">{c.fonction}</p>
-                  )}
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    {[c.fonction, c.entreprise].filter(Boolean).join(' · ')}
+                  </p>
                 </div>
                 <button
                   onClick={() => navigate(`/admin/contacts/${c.id}`)}

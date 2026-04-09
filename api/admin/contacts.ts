@@ -71,22 +71,28 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
   // ────────────────────────────────────────────────────────────────────────────
   if (req.method === 'GET') {
     try {
-      // Fetch all contacts
-      const contactsRes = await fetch(
-        `https://api.airtable.com/v0/${baseId}/Contacts?pageSize=100`,
-        { headers: airtableHeaders }
-      );
+      // Fetch contacts, scripts and companies in parallel
+      const [contactsRes, scriptsRes, companiesRes] = await Promise.all([
+        fetch(`https://api.airtable.com/v0/${baseId}/Contacts?pageSize=100`, { headers: airtableHeaders }),
+        fetch(`https://api.airtable.com/v0/${baseId}/Scripts?fields[]=Contact&fields[]=Statut&pageSize=100`, { headers: airtableHeaders }),
+        fetch(`https://api.airtable.com/v0/${baseId}/Entreprises?fields[]=Nom&pageSize=100`, { headers: airtableHeaders }),
+      ]);
+
       if (!contactsRes.ok) throw new Error(`Airtable contacts: ${contactsRes.status}`);
       const contactsData = await contactsRes.json() as { records: AirtableRecord[] };
 
-      // Fetch all scripts (to count statuses)
-      const scriptsRes = await fetch(
-        `https://api.airtable.com/v0/${baseId}/Scripts?fields[]=Contact&fields[]=Statut&pageSize=100`,
-        { headers: airtableHeaders }
-      );
       const scriptsData = scriptsRes.ok
         ? (await scriptsRes.json() as { records: AirtableRecord[] })
         : { records: [] };
+
+      // Map company id → name
+      const companyNameById: Record<string, string> = {};
+      if (companiesRes.ok) {
+        const companiesData = await companiesRes.json() as { records: AirtableRecord[] };
+        for (const c of companiesData.records) {
+          companyNameById[c.id] = String(c.fields.Nom ?? '');
+        }
+      }
 
       // Group scripts by contact
       const scriptCountByContact: Record<string, { total: number; validated: number }> = {};
@@ -99,16 +105,20 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
         }
       }
 
-      const contacts = contactsData.records.map((c) => ({
-        id: c.id,
-        prenom: String(c.fields['Prénom'] ?? c.fields['Prenom'] ?? ''),
-        nom: String(c.fields.Nom ?? ''),
-        email: String(c.fields.Email ?? ''),
-        fonction: String(c.fields.Fonction ?? ''),
-        token: String(c.fields.Token ?? ''),
-        scriptCount: scriptCountByContact[c.id]?.total ?? 0,
-        validatedCount: scriptCountByContact[c.id]?.validated ?? 0,
-      }));
+      const contacts = contactsData.records.map((c) => {
+        const linkedCompanies = (c.fields.Entreprise as string[]) ?? [];
+        return {
+          id: c.id,
+          prenom: String(c.fields['Prénom'] ?? c.fields['Prenom'] ?? ''),
+          nom: String(c.fields.Nom ?? ''),
+          email: String(c.fields.Email ?? ''),
+          fonction: String(c.fields.Fonction ?? ''),
+          token: String(c.fields.Token ?? ''),
+          entreprise: linkedCompanies.length > 0 ? companyNameById[linkedCompanies[0]] ?? '' : '',
+          scriptCount: scriptCountByContact[c.id]?.total ?? 0,
+          validatedCount: scriptCountByContact[c.id]?.validated ?? 0,
+        };
+      });
 
       res.statusCode = 200;
       res.end(JSON.stringify({ contacts }));
