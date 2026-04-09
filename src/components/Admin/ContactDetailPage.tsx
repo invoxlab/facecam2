@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Copy, Check, Download, CheckCircle2, Clock, Loader2, Plus, Trash2 } from 'lucide-react';
+import { ArrowLeft, Download, CheckCircle2, Clock, Loader2, Plus, Trash2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import AdminLayout from './AdminLayout';
+import LinkBox from './LinkBox';
 
 interface Script {
   airtableId: string;
@@ -31,7 +32,6 @@ export default function ContactDetailPage() {
   const [contact, setContact] = useState<ContactDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
 
   // Add script form
   const [showAddScript, setShowAddScript] = useState(false);
@@ -61,13 +61,6 @@ export default function ContactDetailPage() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const copyLink = async () => {
-    if (!contact?.token) return;
-    await navigator.clipboard.writeText(`${window.location.origin}/?token=${contact.token}`);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
   };
 
   const handleAddScript = async (e: React.FormEvent) => {
@@ -193,19 +186,10 @@ export default function ContactDetailPage() {
           )}
         </div>
 
-        {contact.token ? (
-          <button
-            onClick={copyLink}
-            className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:border-invox-blue hover:text-invox-blue transition-colors"
-          >
-            {copied ? <Check size={15} className="text-green-500" /> : <Copy size={15} />}
-            {copied ? 'Lien copié !' : 'Copier le lien FaceCam'}
-          </button>
-        ) : (
-          <p className="text-xs text-gray-400 text-center">
-            Token en cours de génération par Airtable…
-          </p>
-        )}
+        {contact.token
+          ? <LinkBox token={contact.token} />
+          : <p className="text-xs text-gray-400 text-center">Token en cours de génération…</p>
+        }
       </div>
 
       {/* Scripts */}

@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Copy, Check, ChevronRight, Loader2 } from 'lucide-react';
+import { Plus, ChevronRight, Loader2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import AdminLayout from './AdminLayout';
+import LinkBox from './LinkBox';
 
 interface ContactSummary {
   id: string;
@@ -20,7 +21,6 @@ export default function ContactsPage() {
   const [contacts, setContacts] = useState<ContactSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   useEffect(() => {
     loadContacts();
@@ -42,13 +42,6 @@ export default function ContactsPage() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const copyLink = async (token: string, id: string) => {
-    const url = `${window.location.origin}/?token=${token}`;
-    await navigator.clipboard.writeText(url);
-    setCopiedId(id);
-    setTimeout(() => setCopiedId(null), 2000);
   };
 
   return (
@@ -87,7 +80,6 @@ export default function ContactsPage() {
       <div className="grid gap-3 sm:grid-cols-2">
         {contacts.map((c) => {
           const progress = c.scriptCount > 0 ? Math.round((c.validatedCount / c.scriptCount) * 100) : 0;
-          const isCopied = copiedId === c.id;
 
           return (
             <div key={c.id} className="bg-white rounded-2xl border border-gray-200 p-4 flex flex-col gap-3">
@@ -128,17 +120,10 @@ export default function ContactsPage() {
                 <p className="text-xs text-gray-400">Aucun script</p>
               )}
 
-              {c.token ? (
-                <button
-                  onClick={() => copyLink(c.token, c.id)}
-                  className="flex items-center justify-center gap-2 w-full py-2 rounded-xl border border-gray-200 text-xs font-medium text-gray-600 hover:border-invox-blue hover:text-invox-blue transition-colors"
-                >
-                  {isCopied ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
-                  {isCopied ? 'Lien copié !' : 'Copier le lien'}
-                </button>
-              ) : (
-                <p className="text-xs text-gray-400 text-center">Token en cours de génération…</p>
-              )}
+              {c.token
+                ? <LinkBox token={c.token} />
+                : <p className="text-xs text-gray-400 text-center">Token en cours de génération…</p>
+              }
             </div>
           );
         })}

@@ -2,6 +2,13 @@
 // Variables d'env : AIRTABLE_API_KEY, AIRTABLE_BASE_ID, VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY
 
 import type { IncomingMessage, ServerResponse } from 'http';
+import { randomBytes } from 'crypto';
+
+function generateToken(prenom: string, nom: string): string {
+  const slug = (s: string) =>
+    s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '');
+  return `${slug(prenom)}-${slug(nom)}-${randomBytes(3).toString('hex')}`;
+}
 
 const ALLOWED_DOMAIN = 'invox.fr';
 
@@ -163,6 +170,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
       }
 
       // Créer un contact + ses scripts
+      const token = generateToken(body.prenom ?? '', body.nom ?? '');
       const contactRes = await fetch(
         `https://api.airtable.com/v0/${baseId}/Contacts`,
         {
@@ -176,6 +184,8 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
                 Email: body.email,
                 Mobile: body.mobile,
                 Fonction: body.fonction,
+                Token: token,
+                ...(body.companyId ? { Entreprise: [body.companyId] } : {}),
               },
             }],
           }),
@@ -213,7 +223,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
       }
 
       res.statusCode = 200;
-      res.end(JSON.stringify({ contactId }));
+      res.end(JSON.stringify({ contactId, token }));
     } catch (err) {
       res.statusCode = 500;
       res.end(JSON.stringify({ error: String(err) }));
@@ -245,6 +255,7 @@ interface PostBody {
   email?: string;
   mobile?: string;
   fonction?: string;
+  companyId?: string;
   scripts?: ScriptInput[];
   // add-script
   contactId?: string;

@@ -9,6 +9,8 @@ import AdminLogin from './components/Admin/AdminLogin';
 import ContactsPage from './components/Admin/ContactsPage';
 import ContactNewPage from './components/Admin/ContactNewPage';
 import ContactDetailPage from './components/Admin/ContactDetailPage';
+import CompaniesPage from './components/Admin/CompaniesPage';
+import CompanyDetailPage from './components/Admin/CompanyDetailPage';
 import { useProjectStore } from './stores/projectStore';
 import { fetchScriptsFromToken, savePerson } from './lib/syncAirtable';
 
@@ -78,7 +80,9 @@ function App() {
         <Route path="/project/:id/preview" element={<VideoPreview />} />
         {/* Admin */}
         <Route path="/admin/login" element={<AdminLogin />} />
-        <Route path="/admin" element={<Navigate to="/admin/contacts" replace />} />
+        <Route path="/admin" element={<Navigate to="/admin/companies" replace />} />
+        <Route path="/admin/companies" element={<AdminGuard><CompaniesPage /></AdminGuard>} />
+        <Route path="/admin/companies/:id" element={<AdminGuard><CompanyDetailPage /></AdminGuard>} />
         <Route path="/admin/contacts" element={<AdminGuard><ContactsPage /></AdminGuard>} />
         <Route path="/admin/contacts/new" element={<AdminGuard><ContactNewPage /></AdminGuard>} />
         <Route path="/admin/contacts/:id" element={<AdminGuard><ContactDetailPage /></AdminGuard>} />

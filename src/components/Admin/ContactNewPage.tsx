@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, Plus, Trash2, Loader2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import AdminLayout from './AdminLayout';
@@ -11,17 +11,28 @@ interface ScriptDraft {
   ordre: number;
 }
 
+interface Company {
+  id: string;
+  nom: string;
+}
+
 export default function ContactNewPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const preselectedCompanyId = searchParams.get('companyId') ?? '';
 
-  // Étape 1 : infos contact
+  // Entreprises
+  const [companies, setCompanies] = useState<Company[]>([]);
+  const [companyId, setCompanyId] = useState(preselectedCompanyId);
+
+  // Contact
   const [prenom, setPrenom] = useState('');
   const [nom, setNom] = useState('');
   const [email, setEmail] = useState('');
   const [mobile, setMobile] = useState('');
   const [fonction, setFonction] = useState('');
 
-  // Étape 2 : scripts
+  // Scripts
   const [step, setStep] = useState<1 | 2>(1);
   const [scripts, setScripts] = useState<ScriptDraft[]>([
     { titre: '', script: '', instructions: '', ordre: 1 },
@@ -29,6 +40,24 @@ export default function ContactNewPage() {
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    loadCompanies();
+  }, []);
+
+  const loadCompanies = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch('/api/admin/companies', {
+        headers: { Authorization: `Bearer ${session?.access_token ?? ''}` },
+      });
+      if (!res.ok) return;
+      const data = await res.json() as { companies: Company[] };
+      setCompanies(data.companies);
+    } catch {
+      // silent
+    }
+  };
 
   const addScript = () => {
     setScripts((prev) => [
@@ -65,7 +94,7 @@ export default function ContactNewPage() {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${session?.access_token ?? ''}`,
         },
-        body: JSON.stringify({ prenom, nom, email, mobile, fonction, scripts }),
+        body: JSON.stringify({ prenom, nom, email, mobile, fonction, companyId, scripts }),
       });
 
       if (!res.ok) {
@@ -74,31 +103,66 @@ export default function ContactNewPage() {
       }
 
       const data = await res.json() as { contactId: string };
-      navigate(`/admin/contacts/${data.contactId}`);
+      // Retour à la fiche entreprise si on vient de là, sinon fiche contact
+      if (preselectedCompanyId) {
+        navigate(`/admin/companies/${preselectedCompanyId}`);
+      } else {
+        navigate(`/admin/contacts/${data.contactId}`);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur inconnue');
       setSubmitting(false);
     }
   };
 
+  const backTarget = preselectedCompanyId
+    ? `/admin/companies/${preselectedCompanyId}`
+    : '/admin/contacts';
+
   return (
     <AdminLayout>
       <div className="flex items-center gap-3 mb-6">
         <button
-          onClick={() => (step === 2 ? setStep(1) : navigate('/admin/contacts'))}
+          onClick={() => (step === 2 ? setStep(1) : navigate(backTarget))}
           className="p-2 -ml-2 text-gray-400 hover:text-invox-dark rounded-xl transition-colors"
         >
           <ArrowLeft size={20} />
         </button>
         <div>
-          <h1 className="text-xl font-bold text-invox-dark">Nouveau contact</h1>
+          <h1 className="text-xl font-bold text-invox-dark">Nouvel ambassadeur</h1>
           <p className="text-xs text-gray-400">Étape {step} / 2</p>
         </div>
       </div>
 
-      {/* Étape 1 : Infos contact */}
+      {/* Étape 1 : Infos ambassadeur */}
       {step === 1 && (
         <form onSubmit={handleStep1} className="bg-white rounded-2xl border border-gray-200 p-5 space-y-4">
+          {/* Entreprise */}
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">Entreprise *</label>
+            <select
+              required
+              value={companyId}
+              onChange={(e) => setCompanyId(e.target.value)}
+              className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-invox-blue bg-white"
+            >
+              <option value="">— Choisir une entreprise —</option>
+              {companies.map((c) => (
+                <option key={c.id} value={c.id}>{c.nom}</option>
+              ))}
+            </select>
+            <p className="text-xs text-gray-400 mt-1">
+              Pas encore dans la liste ?{' '}
+              <button
+                type="button"
+                onClick={() => navigate('/admin/companies')}
+                className="text-invox-blue underline"
+              >
+                Créer l'entreprise d'abord
+              </button>
+            </p>
+          </div>
+
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">Prénom *</label>
@@ -246,7 +310,7 @@ export default function ContactNewPage() {
             className="w-full flex items-center justify-center gap-2 py-3.5 bg-green-600 text-white rounded-xl font-semibold text-sm disabled:opacity-50 hover:bg-green-700 transition-colors"
           >
             {submitting && <Loader2 size={16} className="animate-spin" />}
-            {submitting ? 'Création en cours…' : 'Créer le contact'}
+            {submitting ? 'Création en cours…' : 'Créer l\'ambassadeur'}
           </button>
         </form>
       )}
