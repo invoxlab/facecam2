@@ -4,6 +4,11 @@ import ProjectList from './components/Projects/ProjectList';
 import ScriptEditor from './components/Editor/ScriptEditor';
 import TeleprompterView from './components/Teleprompter/TeleprompterView';
 import VideoPreview from './components/Preview/VideoPreview';
+import AdminGuard from './components/Admin/AdminGuard';
+import AdminLogin from './components/Admin/AdminLogin';
+import ContactsPage from './components/Admin/ContactsPage';
+import ContactNewPage from './components/Admin/ContactNewPage';
+import ContactDetailPage from './components/Admin/ContactDetailPage';
 import { useProjectStore } from './stores/projectStore';
 import { fetchScriptsFromToken, savePerson } from './lib/syncAirtable';
 
@@ -71,6 +76,12 @@ function App() {
         <Route path="/project/:id" element={<ScriptEditor />} />
         <Route path="/project/:id/teleprompter" element={<TeleprompterView />} />
         <Route path="/project/:id/preview" element={<VideoPreview />} />
+        {/* Admin */}
+        <Route path="/admin/login" element={<AdminLogin />} />
+        <Route path="/admin" element={<Navigate to="/admin/contacts" replace />} />
+        <Route path="/admin/contacts" element={<AdminGuard><ContactsPage /></AdminGuard>} />
+        <Route path="/admin/contacts/new" element={<AdminGuard><ContactNewPage /></AdminGuard>} />
+        <Route path="/admin/contacts/:id" element={<AdminGuard><ContactDetailPage /></AdminGuard>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
